@@ -1,34 +1,31 @@
-import os
-from pymongo import MongoClient
-from dotenv import load_dotenv
 from fastapi import Form, FastAPI
 from typing import Any, Optional
 from datetime import datetime
+from pymongo import MongoClient
+from dotenv import load_dotenv
+from twilio.rest import Client
 from utils import process_pdf
 from chains import chain_gera_relatorio
-from twilio.rest import Client 
+import os
 
 load_dotenv()
 
 TWILIO_SID = os.getenv("TWILIO_SID")
 TWILIO_AUTH = os.getenv("TWILIO_TOKEN")
-
 MONGODB_ATLAS_CLUSTER_URI = os.getenv('MONGODB_URI')
-twilio_client = Client(TWILIO_SID, TWILIO_AUTH)
 
+twilio_client = Client(TWILIO_SID, TWILIO_AUTH)
 app = FastAPI(
     title="Llama Hackathon",
     version="1.0",
-    description="Uma API que ",
+    description="Uma API para automação financeira com Twilio e MongoDB.",
 )
 
-def db(collection : str):
+def db(collection: str):
     client = MongoClient(MONGODB_ATLAS_CLUSTER_URI)
     DB_NAME = "metahack"
     COLLECTION_NAME = collection
-    db = client[DB_NAME][COLLECTION_NAME]
-    return db
-
+    return client[DB_NAME][COLLECTION_NAME]
 
 @app.post('/')
 async def receive_pdf(
@@ -39,19 +36,21 @@ async def receive_pdf(
 ):
     user_num = From[10:]
     user_db = db("userdb")
+    transactions_db = db("transactions")
+    reports_db = db("reports")
+
+    # Retrieve or initialize user data
     result = user_db.find_one_and_update(
         {"user_num": user_num},
         {"$setOnInsert": {"user_num": user_num, "data": {"freq": None, "estado": None}}},
         upsert=True,
         return_document=True
     )
-
     state = result["data"]["estado"]
+    freq = result["data"].get("freq", None)
     Body_lower = Body.lower() if Body else ""
 
-
-
-    # **Map old state names to new state names for backward compatibility**
+    # Map old states to new ones for backward compatibility
     old_to_new_state_map = {
         None: "aguardando_frequencia",
         "frequencia": "aguardando_extrato",
@@ -59,13 +58,10 @@ async def receive_pdf(
     }
     if state in old_to_new_state_map:
         new_state = old_to_new_state_map[state]
-        user_db.update_one(
-            {"user_num": user_num},
-            {"$set": {"data.estado": new_state}}
-        )
+        user_db.update_one({"user_num": user_num}, {"$set": {"data.estado": new_state}})
         state = new_state
 
-    # **Handle user input based on the current state**
+    # Handle different states
     if state == "aguardando_frequencia":
         if Body_lower in ["semanal", "mensal"]:
             user_db.update_one(
@@ -73,144 +69,110 @@ async def receive_pdf(
                 {"$set": {"data.freq": Body_lower, "data.estado": "aguardando_extrato"}}
             )
             message = twilio_client.messages.create(
-                from_='whatsapp:+15674852810',
+                from_='whatsapp:+YourTwilioNumber',
                 body="Por favor, envie o extrato bancário mais recente em formato PDF.",
                 to='whatsapp:+' + user_num
             )
         else:
             message = twilio_client.messages.create(
-                from_='whatsapp:+15674852810',
-                body="Oi! 👋 Envia um extrato pra eu fazer um relatório, ou envie 'Semanal' ou 'Mensal' para mudar a frequência dos lembretes.",
+                from_='whatsapp:+YourTwilioNumber',
+                body="Por favor, envie 'Semanal' ou 'Mensal' para configurar sua frequência.",
                 to='whatsapp:+' + user_num
             )
 
     elif state == "aguardando_extrato":
         if MediaUrl0:
-            user_db.update_one(
-                {"user_num": user_num},
-                {"$set": {"data.estado": "processando_extrato"}}
-            )
+            user_db.update_one({"user_num": user_num}, {"$set": {"data.estado": "processando_extrato"}})
             message = twilio_client.messages.create(
-                from_='whatsapp:+15674852810',
-                body="Espere um pouco! Estamos processando seu extrato 😊. Pode demorar de um a dois minutos.",
+                from_='whatsapp:+YourTwilioNumber',
+                body="Processando seu extrato, por favor, aguarde! 😊",
                 to='whatsapp:+' + user_num
             )
             try:
-                # **Include your existing processing logic here**
                 data = await process_pdf(MediaUrl0)
                 extract = data.additional_kwargs['tool_calls']
-                data_antiga = eval(extract[0]['function']['arguments'])['data']
 
-                # **Date processing logic**
-                from datetime import datetime
-                data_obj = datetime.strptime(data_antiga, "%Y-%m-%d").date()
+                # Filter transactions by frequency
+                interval_days = 7 if freq == "semanal" else 30
                 data_hoje = datetime.today().date()
-                delta = (data_obj - data_hoje).days
-                intervalo_tolerancia = 31  # Example: 31 days
+                filtered_transactions = []
 
-                if abs(delta) <= intervalo_tolerancia:
-                    s = ""
-                    for i in range(len(extract)):
-                        s += f"Transação: {extract[i]['function']['arguments']}\n --------------------------\n"
+                for transaction in extract:
+                    transaction_data = eval(transaction['function']['arguments'])
+                    transaction_date = datetime.strptime(transaction_data['data'], "%Y-%m-%d").date()
+                    delta = (data_hoje - transaction_date).days
 
-                    relatorio = chain_gera_relatorio.invoke({'transacoes': s})
+                    if delta <= interval_days:
+                        filtered_transactions.append({
+                            "user_id": user_num,
+                            "tipo": transaction_data["tipo"],
+                            "data": transaction_date,
+                            "entrada_ou_saida": transaction_data["entrada_ou_saida"],
+                            "valor": transaction_data["valor"],
+                        })
 
-                    # **Split the report into smaller messages**
-                    limite_caracteres = 1500
-                    secoes = relatorio.split('\n\n')
-                    mensagens = []
-                    mensagem_atual = ''
+                if filtered_transactions:
+                    transactions_db.insert_many(filtered_transactions)
 
-                    for secao in secoes:
-                        if len(mensagem_atual) + len(secao) + 2 <= limite_caracteres:
-                            if mensagem_atual:
-                                mensagem_atual += '\n\n' + secao
-                            else:
-                                mensagem_atual = secao
-                        else:
-                            mensagens.append(mensagem_atual)
-                            mensagem_atual = secao
+                # Generate report
+                formatted_transactions = "\n".join(
+                    f"Transação: {t}" for t in filtered_transactions
+                )
+                relatorio = chain_gera_relatorio.invoke({'transacoes': formatted_transactions})
 
-                    if mensagem_atual:
-                        mensagens.append(mensagem_atual)
+                # Save report to database
+                reports_db.insert_one({
+                    "user_id": user_num,
+                    "report": relatorio,
+                    "generated_at": datetime.now()
+                })
 
-                    # **Send each message via WhatsApp**
-                    for texto_mensagem in mensagens:
-                        message = twilio_client.messages.create(
-                            from_='whatsapp:+15674852810',
-                            body=texto_mensagem,
-                            to='whatsapp:+' + user_num
-                        )
-
-                    # **Update the user's state to 'relatorio_enviado'**
-                    user_db.update_one(
-                        {"user_num": user_num},
-                        {"$set": {"data.estado": "relatorio_enviado"}}
-                    )
-
-                else:
-                    # **Prompt the user to send a recent bank statement**
-                    message = twilio_client.messages.create(
-                        from_='whatsapp:+15674852810',
-                        body="""Para fornecer recomendações precisas, precisamos do extrato bancário mais recente. Por favor, envie um extrato atualizado.""",
+                # Send the report via WhatsApp
+                messages = [relatorio[i:i + 1500] for i in range(0, len(relatorio), 1500)]
+                for message in messages:
+                    twilio_client.messages.create(
+                        from_='whatsapp:+YourTwilioNumber',
+                        body=message,
                         to='whatsapp:+' + user_num
                     )
-                    user_db.update_one(
-                        {"user_num": user_num},
-                        {"$set": {"data.estado": "aguardando_extrato"}}
-                    )
-            except Exception as err:
-                print(err)
-                message = twilio_client.messages.create(
-                    from_='whatsapp:+15674852810',
-                    body="Tivemos um problema ao processar seu extrato. Por favor, envie novamente.",
+
+                user_db.update_one({"user_num": user_num}, {"$set": {"data.estado": "relatorio_enviado"}})
+
+            except Exception as e:
+                print(e)
+                user_db.update_one({"user_num": user_num}, {"$set": {"data.estado": "aguardando_extrato"}})
+                twilio_client.messages.create(
+                    from_='whatsapp:+YourTwilioNumber',
+                    body="Erro ao processar o extrato. Tente novamente.",
                     to='whatsapp:+' + user_num
                 )
-                user_db.update_one(
-                    {"user_num": user_num},
-                    {"$set": {"data.estado": "aguardando_extrato"}}
-                )
         else:
-            message = twilio_client.messages.create(
-                from_='whatsapp:+15674852810',
+            twilio_client.messages.create(
+                from_='whatsapp:+YourTwilioNumber',
                 body="Por favor, envie o extrato bancário em formato PDF.",
                 to='whatsapp:+' + user_num
             )
 
     elif state == "processando_extrato":
-        # **Inform the user that processing is ongoing**
-        message = twilio_client.messages.create(
-            from_='whatsapp:+15674852810',
-            body="Estamos processando seu extrato. Por favor, aguarde.",
+        twilio_client.messages.create(
+            from_='whatsapp:+YourTwilioNumber',
+            body="Seu extrato está sendo processado. Por favor, aguarde!",
             to='whatsapp:+' + user_num
         )
 
     elif state == "relatorio_enviado":
-        # **Interaction is complete; optionally reset state**
-        message = twilio_client.messages.create(
-            from_='whatsapp:+15674852810',
-            body="Se você precisar de mais um relatório, é só enviar o extrato novamente! 😊",
+        twilio_client.messages.create(
+            from_='whatsapp:+YourTwilioNumber',
+            body="Seu relatório foi enviado. Envie outro extrato para continuar! 😊",
             to='whatsapp:+' + user_num
         )
-        user_db.update_one(
-            {"user_num": user_num},
-            {"$set": {"data.estado": "aguardando_frequencia", "data.freq": None}}
-        )
+        user_db.update_one({"user_num": user_num}, {"$set": {"data.estado": "aguardando_frequencia"}})
 
     else:
-        # **Handle unexpected states by resetting**
-        user_db.update_one(
-            {"user_num": user_num},
-            {"$set": {"data.estado": "aguardando_frequencia", "data.freq": None}}
-        )
-        message = twilio_client.messages.create(
-            from_='whatsapp:+15674852810',
-            body="""Olá! 👋 Eu sou o Finn.AI, o bot que ajuda você a cuidar das suas finanças! 😊
-
-Para começar, com qual frequência você prefere receber nossas mensagens? As opções são:
-- Semanal
-- Mensal
-Escolha a que for mais conveniente para você! 📅✨""",
+        user_db.update_one({"user_num": user_num}, {"$set": {"data.estado": "aguardando_frequencia"}})
+        twilio_client.messages.create(
+            from_='whatsapp:+YourTwilioNumber',
+            body="Bem-vindo ao Finn.AI! Escolha a frequência: 'Semanal' ou 'Mensal'.",
             to='whatsapp:+' + user_num
         )
 

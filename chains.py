@@ -62,22 +62,6 @@ Use um tom claro e motivador, ajudando o usuário a visualizar um caminho financ
 
 """
 
-template_anomalias = """
-Como analista financeiro, ajude o usuário a identificar possíveis problemas em seus gastos ao:
-
-1. **Localizar despesas fora do padrão habitual**, utilizando emojis para destacar as categorias afetadas e explicando o porquê.
-2. **Verificar cobranças duplicadas ou irregulares**, listando-as com detalhes claros.
-3. **Identificar serviços recorrentes que parecem não estar sendo usados**, sugerindo cancelamentos se necessário.
-4. **Apontar categorias com gastos desproporcionais** e sugerir ajustes, usando gráficos de pizza ou barras para visualização.
-
-Se não encontrar anomalias, **destaque o bom comportamento financeiro do usuário** com mensagens positivas e exemplos simples e amigáveis.
-
-**Dados:**
-{dados_completos}
-
-**Padrões:**
-{padroes}
-"""
 
 template_insights = """
 Como consultor financeiro, gere insights claros e acionáveis com base nos dados do usuário:
@@ -91,9 +75,6 @@ Apresente os insights de forma acessível e motivadora, sugerindo passos concret
 
 **Tendências:**
 {dados_completos}
-
-**Anomalias:**
-{anomalias}
 """
 
 template_recomendacoes = """
@@ -129,8 +110,7 @@ Você é um especialista em criar relatórios financeiros claros e objetivos. Cr
    - **Anomalias importantes** e como ajustá-las, destacadas com sinais de alerta.
 
 3. **Recomendações:**
-   - **Sugestões práticas para economizar**, ilustradas com emojis e passos concretos.
-   - **Próximos passos que o usuário pode seguir facilmente**, com exemplos motivadores.
+   - **Sugestões práticas para economizar**, ilustradas com emojis e passos concretos. Não de sugestões genéricas e vagas, mas sim recomendações específicas e acionáveis com base nos dados fornecidos.
 
 Não faça o relatório em formato de markdown.
 
