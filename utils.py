@@ -42,16 +42,11 @@ async def process_pdf(pdf_url):
 
     parsing_result = await parser.aload_data(file_path)
 
-    # llm = ChatOpenAI(
-    #     model='gpt-4o-2024-08-06',
-    #     temperature=0
-    # )
-    
-    llm = ChatGroq(
-        api_key=GROQ_API_KEY,
-        model="llama3-70b-8192"
+    llm = ChatOpenAI(
+        model='gpt-4o-2024-08-06',
+        temperature=0
     )
-
+    
     class Transaction(BaseModel):
         """Extrai valores relevantes de um documento de extrato bancário de um usuário"""
         tipo: str = Field(description="Classificação da transferência", examples=["""Alimentação: Transações relacionadas à aquisição de alimentos e bebidas, seja para consumo doméstico ou em estabelecimentos comerciais, como supermercados, restaurantes, lanchonetes e serviços de entrega de refeições.
