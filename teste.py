@@ -71,13 +71,13 @@ async def receive_pdf(
                 {"$set": {"data.freq": Body_lower, "data.estado": "aguardando_extrato"}}
             )
             message = twilio_client.messages.create(
-                from_='whatsapp:+YourTwilioNumber',
+                from_='whatsapp:+15674852810',
                 body="Por favor, envie o extrato bancário mais recente em formato PDF.",
                 to='whatsapp:+' + user_num
             )
         else:
             message = twilio_client.messages.create(
-                from_='whatsapp:+YourTwilioNumber',
+                from_='whatsapp:+15674852810',
                 body="Desculpe, não entendi. Por favor, responda com 'semanal' ou 'mensal'.",
                 to='whatsapp:+' + user_num
             )
@@ -89,7 +89,7 @@ async def receive_pdf(
                 {"$set": {"data.estado": "processando_extrato"}}
             )
             message = twilio_client.messages.create(
-                from_='whatsapp:+YourTwilioNumber',
+                from_='whatsapp:+15674852810',
                 body="Espere um pouco! Estamos processando seu extrato 😊.",
                 to='whatsapp:+' + user_num
             )
@@ -135,7 +135,7 @@ async def receive_pdf(
                     # **Send each message via WhatsApp**
                     for texto_mensagem in mensagens:
                         message = twilio_client.messages.create(
-                            from_='whatsapp:+YourTwilioNumber',
+                            from_='whatsapp:+15674852810',
                             body=texto_mensagem,
                             to='whatsapp:+' + user_num
                         )
@@ -149,7 +149,7 @@ async def receive_pdf(
                 else:
                     # **Prompt the user to send a recent bank statement**
                     message = twilio_client.messages.create(
-                        from_='whatsapp:+YourTwilioNumber',
+                        from_='whatsapp:+15674852810',
                         body="""Para fornecer recomendações precisas, precisamos do extrato bancário mais recente. Por favor, envie um extrato atualizado.""",
                         to='whatsapp:+' + user_num
                     )
@@ -160,7 +160,7 @@ async def receive_pdf(
             except Exception as err:
                 print(err)
                 message = twilio_client.messages.create(
-                    from_='whatsapp:+YourTwilioNumber',
+                    from_='whatsapp:+15674852810',
                     body="Tivemos um problema ao processar seu extrato. Por favor, envie novamente.",
                     to='whatsapp:+' + user_num
                 )
@@ -170,7 +170,7 @@ async def receive_pdf(
                 )
         else:
             message = twilio_client.messages.create(
-                from_='whatsapp:+YourTwilioNumber',
+                from_='whatsapp:+15674852810',
                 body="Por favor, envie o extrato bancário em formato PDF.",
                 to='whatsapp:+' + user_num
             )
@@ -178,7 +178,7 @@ async def receive_pdf(
     elif state == "processando_extrato":
         # **Inform the user that processing is ongoing**
         message = twilio_client.messages.create(
-            from_='whatsapp:+YourTwilioNumber',
+            from_='whatsapp:+15674852810',
             body="Estamos processando seu extrato. Por favor, aguarde.",
             to='whatsapp:+' + user_num
         )
@@ -186,8 +186,8 @@ async def receive_pdf(
     elif state == "relatorio_enviado":
         # **Interaction is complete; optionally reset state**
         message = twilio_client.messages.create(
-            from_='whatsapp:+YourTwilioNumber',
-            body="Seu relatório foi enviado. Precisa de mais alguma coisa?",
+            from_='whatsapp:+15674852810',
+            body="Seu relatório foi enviado. Daqui a sete dias entraremos em contato novamente. 😊",
             to='whatsapp:+' + user_num
         )
         user_db.update_one(
@@ -202,7 +202,7 @@ async def receive_pdf(
             {"$set": {"data.estado": "aguardando_frequencia", "data.freq": None}}
         )
         message = twilio_client.messages.create(
-            from_='whatsapp:+YourTwilioNumber',
+            from_='whatsapp:+15674852810',
             body="""Olá! 👋 Eu sou o Finn.AI, o bot que ajuda você a cuidar das suas finanças! 😊
 
 Para começar, com qual frequência você prefere receber nossas mensagens? As opções são:
