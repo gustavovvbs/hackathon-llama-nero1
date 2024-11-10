@@ -116,7 +116,7 @@ async def receive_pdf(
                         filtered_transactions.append({
                             "user_id": user_num,
                             "tipo": transaction_data["tipo"],
-                            "data": transaction_date,
+                            "data": transaction_date.isoformat(),
                             "entrada_ou_saida": transaction_data["entrada_ou_saida"],
                             "valor": transaction_data["valor"],
                         })
