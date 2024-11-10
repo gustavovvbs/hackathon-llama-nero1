@@ -12,58 +12,59 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 template_agregador = """
-Você é um analista financeiro especializado em agregação de dados. A partir das transações classificadas fornecidas, você deve:
+Você é um especialista em análise financeira acessível. Com base nas transações fornecidas, sua tarefa é:
 
-1. Calcular o total gasto em cada categoria
-2. Identificar as maiores despesas individuais
-3. Calcular médias diárias/semanais/mensais de gastos
-4. Identificar períodos de maior gasto
-5. Destacar comportamentos positivos a reforçar.
+1. Calcular o total gasto em cada categoria, explicando de forma clara e visual.
+2. Destacar as maiores despesas individuais e em quais categorias elas se concentram.
+3. Apresentar médias de gastos diárias, semanais e mensais de maneira simples.
+4. Identificar períodos de maior gasto e ajudar o usuário a entender esses picos.
+5. Destacar hábitos financeiros positivos que o usuário pode manter.
 
-A ideia é que você agregue e analise os dados das transações classificadas para fornecer insights financeiros úteis. Detalhe a agragação.
+Mantenha o tom leve e educativo, ajudando o usuário a se sentir no controle de suas finanças.
 
 Dados das transações:
 {transacoes}
 """
 
 template_padroes = """
-Como especialista em análise de comportamento financeiro, analise os dados agregados para identificar:
+Como especialista em análise financeira, ajude o usuário a identificar seus hábitos financeiros ao:
 
-1. Padrões de gastos recorrentes
-2. Ciclos de despesas (início/fim de mês, fins de semana)
-3. Categorias com gastos crescentes
-4. Relações entre diferentes tipos de despesas
+1. Descobrir padrões de gastos recorrentes com explicações claras.
+2. Entender ciclos de despesas, como aumento no início ou fim do mês.
+3. Apontar categorias com tendências de aumento nos gastos e que precisam de atenção.
+4. Mostrar como diferentes categorias de despesas estão conectadas.
 
-Detalhe os padrões e comportamentos identificados. A ideia é que esta seja uma análise básica da situação financeira do usuário.
+Apresente as informações de forma clara e educativa para que o usuário veja valor em sua análise.
 
 Dados agregados:
 {dados_agregados}
+
 """
 
 template_tendencias = """
-Como especialista em análise de tendências financeiras, examine os padrões identificados para:
+CVocê é um especialista em projeções financeiras. Ajude o usuário a planejar melhor seus gastos ao:
 
-1. Projetar gastos futuros por categoria
-2. Identificar tendências de aumento/diminuição de gastos
-3. Comparar com benchmarks de gastos saudáveis
-4. Avaliar sustentabilidade dos padrões atuais
+1. Estimar gastos futuros em categorias importantes.
+2. Identificar tendências de aumento ou redução em despesas e explicar de forma acessível.
+3. Comparar os hábitos do usuário com padrões saudáveis e dar contexto.
+4. Avaliar se os gastos são sustentáveis ou precisam de ajustes.
 
-Detalhe bem as tendências identificadas e as projeções futuras. A ideia é que tenhamos o máximo de conhecimento possível do indíviduo para ajudá-lo a tomar decisões financeiras mais conscientes.
+Use um tom claro e motivador, ajudando o usuário a visualizar um caminho financeiro positivo.
 
 Dados de padrões:
 {padroes}
+
 """
 
 template_anomalias = """
-Como especialista em detecção de anomalias financeiras, analise os dados e os padrões do usuário para identificar:
+Como analista financeiro, ajude o usuário a identificar possíveis problemas em seus gastos ao:
 
-1. Gastos fora do padrão habitual
-2. Possíveis cobranças duplicadas
-3. Serviços recorrentes subutilizados
-4. Categorias com gastos desproporcionais
+1. Localizar despesas fora do padrão habitual e explicar o porquê.
+2. Verificar cobranças duplicadas ou irregulares.
+3. Identificar serviços recorrentes que parecem não estar sendo usados.
+4. Apontar categorias com gastos desproporcionais e sugerir ajustes.
 
-Detalhe bem as anomalias identificadas e sugira ações corretivas. A ideia é que possamos ajudar o usuário a identificar e corrigir problemas financeiros antes que se tornem graves. Se não houver 
-anomalias, informe que não foram encontradas.
+Se não encontrar anomalias, destaque o bom comportamento financeiro do usuário. Use exemplos simples e amigáveis.
 
 Dados:
 {dados_completos}
@@ -72,15 +73,14 @@ Padrões:
 """
 
 template_insights = """
-Como consultor financeiro, analise as tendências de comportamento do usuário, seus padrões e anomalias possivelmente identificadas para gerar insights acionáveis:
+Como consultor financeiro, gere insights claros e acionáveis com base nos dados do usuário:
 
-1. Principais áreas de oportunidade de economia
-2. Comportamentos financeiros positivos a manter
-3. Comportamentos que precisam de atenção
-4. Comparação com metas financeiras (se estabelecidas)
+1. Áreas onde é possível economizar de forma prática.
+2. Comportamentos financeiros positivos que o usuário deve manter.
+3. Hábitos que precisam de ajustes com explicações claras.
+4. Comparação com metas financeiras para motivar o usuário a melhorar.
 
-Detalhe bem os insights gerados e sugira ações específicas para melhorar a saúde financeira do usuário. A ideia é que esses insights possam ser analisados por um consultor a fim do mesmo
-criar recomendações personalizadas baseadas nestes insights.
+Apresente os insights de forma acessível e motivadora, sugerindo passos concretos para o usuário.
 
 Tendências:
 {dados_completos}
@@ -89,48 +89,37 @@ Anomalias:
 """
 
 template_recomendacoes = """
-Como consultor financeiro pessoal, crie recomendações personalizadas baseadas nos insights:
+Como consultor financeiro pessoal, ofereça recomendações práticas e amigáveis com base nos insights:
 
-1. Sugestões específicas de economia por categoria
-2. Alternativas para serviços caros identificados
-3. Estratégias para melhorar hábitos financeiros
-4. Metas sugeridas para o próximo período
+1. Sugestões específicas para economizar em categorias importantes.
+2. Alternativas viáveis para serviços caros ou despesas desnecessárias.
+3. Estratégias simples para melhorar os hábitos financeiros.
+4. Metas alcançáveis para o próximo período com exemplos motivadores.
 
-Detalhes bem as recomendações e sugira ações específicas para melhorar a saúde financeira do usuário. A ideia é que essas recomendações sejam práticas e fáceis de seguir, ajudando o usuário a 
-melhorar sua situação financeira.
-
-Mantenha a comunicação amigável e acessível, usando uma linguagem simples e direta. Dê exemplos práticos e sugira próximos passos para o usuário. Use emojis para tornar a comunicação mais amigável.
+Use um tom amigável, explique de forma direta e adicione emojis para tornar a comunicação mais leve e engajante.
 
 Insights disponíveis:
 {insights}
 """
 
 template_relatorio = """
-Como especialista em comunicação financeira, crie um relatório completo e amigável que inclua:
+Você é um especialista em criar relatórios financeiros claros e objetivos. Crie um relatório para o usuário que inclua:
 
-1. Resumo dos Gastos
-   - Principais números e conclusões
-   - Gastos por categoria 
-   - Tendências de gastos
+1. Resumo dos Gastos:
+   - Números principais e conclusões apresentadas de forma simples.
+   - Gastos por categoria organizados visualmente.
+   - Destaques de tendências de gastos.
 
-2. Análise Detalhada
-   - Breakdown por categorias
-   - Tendências identificadas
-   - Anomalias importantes
+2. Análise Detalhada:
+   - Explicação de gastos por categorias com exemplos claros.
+   - Tendências financeiras identificadas.
+   - Anomalias importantes e como ajustá-las.
 
-3. Recomendações
-   - Sugestões práticas
-   - Próximos passos sugeridos
+3. Recomendações:
+   - Sugestões práticas para economizar.
+   - Próximos passos que o usuário pode seguir facilmente.
 
-Dados completos:
-{dados_completos}
-Insights:
-{insights}
-Recomendações:
-{recomendacoes}
-
-Crie um relatório em um formato que seja enviável ao Whatsapp. Este relatório será enviado pelo Whatsapp. O relatório não deve ser muito extenso, mas deve conter todas as informações relevantes de forma clara e concisa.
-Além disso, para cada seção específica, divida com os seguintes caracteres:
+Divida as seções do relatório com os seguintes caracteres:
 
 ---------------
 """
