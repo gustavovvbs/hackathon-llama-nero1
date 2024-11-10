@@ -132,7 +132,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
 
                 relatorio = chain_gera_relatorio.invoke({'transacoes': s})
 
-                num_caracteres = len(relatorio) // 1500
+                num_caracteres = len(relatorio) // 1500 + 1
                 i = 0
                 while i < num_caracteres:
                     message = twilio_client.messages.create(
