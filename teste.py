@@ -49,6 +49,8 @@ async def receive_pdf(
     state = result["data"]["estado"]
     Body_lower = Body.lower() if Body else ""
 
+    
+
     # **Map old state names to new state names for backward compatibility**
     old_to_new_state_map = {
         None: "aguardando_frequencia",
@@ -187,7 +189,7 @@ async def receive_pdf(
         # **Interaction is complete; optionally reset state**
         message = twilio_client.messages.create(
             from_='whatsapp:+15674852810',
-            body="Seu relatório foi enviado. Daqui a sete dias entraremos em contato novamente. 😊",
+            body="Se você precisar de mais um relatório, é só enviar o extrato novamente! 😊",
             to='whatsapp:+' + user_num
         )
         user_db.update_one(
