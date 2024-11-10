@@ -10,9 +10,10 @@ import tempfile
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 import os
+from pymongo import MongoClient
 
 load_dotenv()
-
+MONGODB_ATLAS_CLUSTER_URI = os.getenv('MONGODB_URI')
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 async def process_pdf(pdf_url):
@@ -80,7 +81,7 @@ async def process_pdf(pdf_url):
 
         Outras Despesas: Demais gastos que não se enquadram nas categorias anteriores, como pagamento de impostos, taxas diversas, serviços domésticos e assinaturas variadas."""])
         
-        data: str = Field(description="Data da transferência")
+        data: str = Field(description="Data da transferência, em formato datetime", examples=["YYYY-MM-DD"])
         entrada_ou_saida: str = Field(description="Se a transferência foi de entrada ou saída")
         valor: str = Field(description="Valor da transferencia")
 
@@ -104,4 +105,14 @@ async def process_pdf(pdf_url):
     response = chain_structured.invoke({"extrato": formatted_docs})
 
     return response
+
+def db(collection : str):
+    client = MongoClient(MONGODB_ATLAS_CLUSTER_URI)
+    DB_NAME = "metahack"
+    COLLECTION_NAME = collection
+    db = client[DB_NAME][COLLECTION_NAME]
+    return db
+
+
+
 
