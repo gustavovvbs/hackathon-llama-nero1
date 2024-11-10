@@ -107,7 +107,6 @@ Você é um especialista em criar relatórios financeiros claros e objetivos. Cr
 2. **Análise Detalhada:**
    - **Explicação de gastos por categorias** com exemplos claros e emojis.
    - **Tendências financeiras identificadas** utilizando gráficos e ícones.
-   - **Anomalias importantes** e como ajustá-las, destacadas com sinais de alerta.
 
 3. **Recomendações:**
    - **Sugestões práticas para economizar**, ilustradas com emojis e passos concretos. Não de sugestões genéricas e vagas, mas sim recomendações específicas e acionáveis com base nos dados fornecidos.
@@ -134,7 +133,6 @@ llm = ChatGroq(
 chain_agregador = prompt_agregador | llm | StrOutputParser()
 chain_padroes = prompt_padroes | llm | StrOutputParser()
 chain_tendencias = prompt_tendencias | llm | StrOutputParser()
-chain_anomalias = prompt_anomalias | llm | StrOutputParser()
 chain_insights = prompt_insights | llm | StrOutputParser()
 chain_recomendacoes = prompt_recomendacoes | llm | StrOutputParser()
 chain_relatorio = prompt_relatorio | llm | StrOutputParser()
@@ -145,7 +143,6 @@ chain_gera_relatorio = (
     {"padroes": chain_analise_basica} 
     | RunnablePassthrough() 
     | {"dados_completos": chain_tendencias, "padroes": itemgetter("padroes")} 
-    | {"anomalias": chain_anomalias, "dados_completos": itemgetter("dados_completos")}
     | RunnablePassthrough() 
     | {"insights": chain_insights, "dados_completos": itemgetter("dados_completos")}
     | {"recomendacoes": chain_recomendacoes, "insights": itemgetter("insights"), "dados_completos": itemgetter("dados_completos")}
