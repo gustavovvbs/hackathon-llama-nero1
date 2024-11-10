@@ -126,7 +126,10 @@ Insights:
 Recomendações:
 {recomendacoes}
 
-Crie um relatório em formato Markdown que seja informativo mas não intimidante.
+Crie um relatório em um formato que seja enviável ao Whatsapp. Este relatório será enviado pelo Whatsapp. 
+Além disso, para cada seção específica, divida com os seguintes caracteres:
+
+---------------
 """
 
 prompt_agregador = PromptTemplate.from_template(template_agregador)

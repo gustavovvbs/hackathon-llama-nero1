@@ -99,7 +99,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
     elif state == "frequencia":
         message = twilio_client.messages.create(
         from_='whatsapp:+15674852810',
-        body=""""Para ajudar você de forma mais precisa, preciso que envie o extrato bancário mais recente, no formato PDF. 📄📅 Isso nos permitirá entender melhor sua situação atual e oferecer recomendações personalizadas.""",
+        body="""Para ajudar você de forma mais precisa, preciso que envie o extrato bancário mais recente, no formato PDF. 📄📅 Isso nos permitirá entender melhor sua situação atual e oferecer recomendações personalizadas.""",
         to='whatsapp:+' + user_num
         )
 
@@ -109,7 +109,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
     elif state == "extrato":
         message = twilio_client.messages.create(
             from_='whatsapp:+15674852810',
-            body="Espere um pouco estamos processando seu extrato",
+            body="Espere um pouco! Estamos processando seu extrato 😊.",
             to='whatsapp:+' + user_num
             )
         
