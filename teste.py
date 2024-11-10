@@ -131,12 +131,17 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
                     s += f"Transação: {extract[i]['function']['arguments']}\n --------------------------\n"
 
                 relatorio = chain_gera_relatorio.invoke({'transacoes': s})
-                print(relatorio)
-                message = twilio_client.messages.create(
-                from_='whatsapp:+15674852810',
-                body=relatorio,
-                to='whatsapp:+' + user_num
-                )
+
+                num_caracteres = len(relatorio) // 1500
+                i = 0
+                while i < num_caracteres:
+                    message = twilio_client.messages.create(
+                    from_='whatsapp:+15674852810',
+                    body=relatorio[i*1500:(i+1)*1500],
+                    to='whatsapp:+' + user_num
+                    )
+
+                    i = i + 1
 
                 result = user_db.update_one(
                 {"user_num": user_num},        # Filtro para encontrar o usuário
