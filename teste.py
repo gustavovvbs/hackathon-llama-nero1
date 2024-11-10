@@ -42,9 +42,9 @@ def respond(user_num):
     #VERIFICANDO ESTADO
     state = result["data"]["estado"]
 
-
+from typing import Optional
 @app.post('/')
-async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: str = Form(...),  MediaContentType0: str = Form(...)):
+async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: Optional[str] = Form(None),  MediaContentType0: Optional[str] = Form(None)):
     user_num = From[10:]
     #VERIFICANDO SE O USUARIO EXISTE, SE SIM PEGA OS DADOS SE NAO CRIA COMO NONE
     user_db = db("userdb") 
