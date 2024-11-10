@@ -131,7 +131,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
                     s += f"Transação: {extract[i]['function']['arguments']}\n --------------------------\n"
 
                 relatorio = chain_gera_relatorio.invoke({'transacoes': s})
-
+                print(relatorio)
                 message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
                 body=relatorio,
@@ -155,6 +155,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
                 )
         
         except Exception as err:
+            print(err)
             message = twilio_client.messages.create(
             from_='whatsapp:+15674852810',
             body="Tivemos um problema ao processar seu extrato. Caso o problema persista, contate nosso suporte.",
@@ -162,6 +163,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
             )
 
             return ''
+        
         
 
 
