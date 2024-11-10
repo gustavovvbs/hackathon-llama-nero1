@@ -99,6 +99,8 @@ Como consultor financeiro pessoal, crie recomendações personalizadas baseadas 
 Detalhes bem as recomendações e sugira ações específicas para melhorar a saúde financeira do usuário. A ideia é que essas recomendações sejam práticas e fáceis de seguir, ajudando o usuário a 
 melhorar sua situação financeira.
 
+Mantenha a comunicação amigável e acessível, usando uma linguagem simples e direta. Dê exemplos práticos e sugira próximos passos para o usuário. Use emojis para tornar a comunicação mais amigável.
+
 Insights disponíveis:
 {insights}
 """
@@ -106,9 +108,10 @@ Insights disponíveis:
 template_relatorio = """
 Como especialista em comunicação financeira, crie um relatório completo e amigável que inclua:
 
-1. Resumo Executivo
+1. Resumo dos Gastos
    - Principais números e conclusões
-   - Destaques do período
+   - Gastos por categoria 
+   - Tendências de gastos
 
 2. Análise Detalhada
    - Breakdown por categorias
@@ -126,7 +129,7 @@ Insights:
 Recomendações:
 {recomendacoes}
 
-Crie um relatório em um formato que seja enviável ao Whatsapp. Este relatório será enviado pelo Whatsapp. 
+Crie um relatório em um formato que seja enviável ao Whatsapp. Este relatório será enviado pelo Whatsapp. O relatório não deve ser muito extenso, mas deve conter todas as informações relevantes de forma clara e concisa.
 Além disso, para cada seção específica, divida com os seguintes caracteres:
 
 ---------------
