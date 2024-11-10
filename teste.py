@@ -111,7 +111,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
             from_='whatsapp:+15674852810',
             body="Espere um pouco! Estamos processando seu extrato 😊.",
             to='whatsapp:+' + user_num
-            )
+        )
         
         try:
             data = await process_pdf(MediaUrl0)
@@ -128,7 +128,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
             delta = (data_obj - data_hoje).days
 
             # Verifica se o delta está dentro do intervalo desejado
-            intervalo_tolerancia = 31  # Exemplo: 30 dias
+            intervalo_tolerancia = 31  # Exemplo: 31 dias
 
             if abs(delta) <= intervalo_tolerancia:
                 s = ""
@@ -137,20 +137,39 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
 
                 relatorio = chain_gera_relatorio.invoke({'transacoes': s})
 
-                num_caracteres = len(relatorio) // 1500 + 1
-                i = 0
-                while i < num_caracteres:
+                # Dividir o relatório em mensagens menores
+                limite_caracteres = 1500
+                secoes = relatorio.split('\n\n')
+                mensagens = []
+                mensagem_atual = ''
+
+                for secao in secoes:
+                    if len(mensagem_atual) + len(secao) + 2 <= limite_caracteres:
+                        if mensagem_atual:
+                            mensagem_atual += '\n\n' + secao
+                        else:
+                            mensagem_atual = secao
+                    else:
+                        mensagens.append(mensagem_atual)
+                        mensagem_atual = secao
+
+                if mensagem_atual:
+                    mensagens.append(mensagem_atual)
+
+                # Enviar cada mensagem via WhatsApp com numeração
+                total_mensagens = len(mensagens)
+                for idx, texto_mensagem in enumerate(mensagens, 1):
+                    texto_numerado = f"Mensagem {idx}/{total_mensagens}\n\n{texto_mensagem}"
                     message = twilio_client.messages.create(
-                    from_='whatsapp:+15674852810',
-                    body=relatorio[i*1500:(i+1)*1500],
-                    to='whatsapp:+' + user_num
+                        from_='whatsapp:+15674852810',
+                        body=texto_numerado,
+                        to='whatsapp:+' + user_num
                     )
 
-                    i = i + 1
-
+                # Atualizar o estado do usuário no banco de dados
                 result = user_db.update_one(
-                {"user_num": user_num},        # Filtro para encontrar o usuário
-                {"$set": {"data.estado": "frequencia"}}    # Atualiza apenas o campo "freq" dentro de "data"
+                    {"user_num": user_num},        # Filtro para encontrar o usuário
+                    {"$set": {"data.estado": "frequencia"}}    # Atualiza o campo "estado" para "frequencia"
                 )
 
                 result = user_db.find_one(
@@ -159,22 +178,35 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
 
             else:
                 message = twilio_client.messages.create(
-                from_='whatsapp:+15674852810',
-                body="""Armazenando seus dados de forma segura em nosso banco de dados, podemos melhorar as análises e fornecer recomendações mais precisas no futuro. 📊
+                    from_='whatsapp:+15674852810',
+                    body="""Armazenando seus dados de forma segura em nosso banco de dados, podemos melhorar as análises e fornecer recomendações mais precisas no futuro. 📊
 
-                    Por favor, envie o extrato bancário mais recente para que possamos começar!""",
-                to='whatsapp:+' + user_num
+    Por favor, envie o extrato bancário mais recente para que possamos começar!""",
+                    to='whatsapp:+' + user_num
                 )
         
         except Exception as err:
             print(err)
             message = twilio_client.messages.create(
-            from_='whatsapp:+15674852810',
-            body="Tivemos um problema ao processar seu extrato. Caso o problema persista, contate nosso suporte.",
-            to='whatsapp:+' + user_num
+                from_='whatsapp:+15674852810',
+                body="Tivemos um problema ao processar seu extrato. Caso o problema persista, contate nosso suporte.",
+                to='whatsapp:+' + user_num
+            )
+
+            # Implementação aqui: Atualizar o estado do usuário no banco de dados
+            result = user_db.update_one(
+                {"user_num": user_num},
+                {"$set": {"data.estado": "extrato"}}  # Define o estado de volta para "extrato"
+            )
+
+            # Opcional: Registrar o erro no banco de dados para análise futura
+            result = user_db.update_one(
+                {"user_num": user_num},
+                {"$set": {"data.last_error": str(err)}}
             )
 
             return ''
+
         
 
     
