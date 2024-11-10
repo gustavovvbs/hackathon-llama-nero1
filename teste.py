@@ -61,13 +61,25 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
             {"$set": {"data.freq": Body.lower(), "data.estado": "frequencia"}}    # Atualiza apenas o campo "freq" dentro de "data"
         )
 
+        result = user_db.find_one(
+            {"user_num": user_num}
+        )
+
     if MediaUrl0 != None:
         result = user_db.update_one(
             {"user_num": user_num},        # Filtro para encontrar o usuário
             {"$set": {"data.estado": "extrato"}}    # Atualiza apenas o campo "freq" dentro de "data"
         )
 
+        result = user_db.find_one(
+            {"user_num": user_num}
+        )
+
+
     # VERIFICANDO ESTADOS
+    print(result)
+    print('-------------------------------')
+    print(type(result))
     state = result["data"]["estado"]
 
     if state == None:
@@ -129,6 +141,10 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
                 result = user_db.update_one(
                 {"user_num": user_num},        # Filtro para encontrar o usuário
                 {"$set": {"data.estado": "frequencia"}}    # Atualiza apenas o campo "freq" dentro de "data"
+                )
+
+                result = user_db.find_one(
+                    {"user_num": user_num}
                 )
 
             else:
