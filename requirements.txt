@@ -38,3 +38,4 @@ python-docx
 boto3
 sqlalchemy
 twilio
+llama-parse
