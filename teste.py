@@ -82,7 +82,7 @@ async def receive_pdf(
         else:
             message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
-                body="Oi! 👋 Envia um extrato pra eu fazer um relatório, ou envie 'Semanal' ou 'Mensal' para mudar a frequência dos lembretes.",
+                body="Oi! 👋 Envia um extrato para que eu possa gerar um relatório financeiro completo para você. Ou, se preferir, envie 'Semanal' ou 'Mensal' para ajustar a frequência dos nossos lembretes personalizados.",
                 to='whatsapp:+' + user_num
             )
 
@@ -94,7 +94,7 @@ async def receive_pdf(
             )
             message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
-                body="Espere um pouco! Estamos processando seu extrato 😊. Pode demorar de um a dois minutos.",
+                body="Estamos processando seu extrato! 😊 Pode levar de um a dois minutos para analisarmos tudo e gerar um relatório detalhado.",
                 to='whatsapp:+' + user_num
             )
             try:
@@ -135,7 +135,7 @@ async def receive_pdf(
                 reports_db.insert_one({
                     "user_id": user_num,
                     "report": relatorio,
-                    "generated_at": datetime.now()
+                    "generated_at": datetime.now().isoformat()
                 })
 
                 # Split the report into smaller messages and send via WhatsApp
@@ -174,7 +174,7 @@ async def receive_pdf(
                 print(err)
                 message = twilio_client.messages.create(
                     from_='whatsapp:+15674852810',
-                    body="Tivemos um problema ao processar seu extrato. Por favor, envie novamente.",
+                    body="Tivemos um problema ao processar seu extrato. Pode enviar novamente, por favor? 😊",
                     to='whatsapp:+' + user_num
                 )
                 user_db.update_one(
@@ -184,26 +184,26 @@ async def receive_pdf(
         else:
             message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
-                body="Por favor, envie o extrato bancário em formato PDF.",
+                body="Por favor, envie o extrato bancário em formato PDF para que possamos começar! 😊",
                 to='whatsapp:+' + user_num
             )
 
     elif state == "processando_extrato":
         message = twilio_client.messages.create(
             from_='whatsapp:+15674852810',
-            body="Estamos processando seu extrato. Por favor, aguarde.",
+            body="Estamos trabalhando no seu extrato. Só mais um pouco de paciência! 😊",
             to='whatsapp:+' + user_num
         )
 
     elif state == "relatorio_enviado":
         message = twilio_client.messages.create(
             from_='whatsapp:+15674852810',
-            body="Se você precisar de mais um relatório, é só enviar o extrato novamente! 😊",
+            body="Seu relatório financeiro está pronto! Se precisar de outro relatório no futuro, basta enviar um novo extrato. Estamos aqui para ajudar! 😊",
             to='whatsapp:+' + user_num
         )
         user_db.update_one(
             {"user_num": user_num},
-            {"$set": {"data.estado": "aguardando_extrato", "data.freq": None}}
+            {"$set": {"data.estado": "aguardando_frequencia", "data.freq": None}}
         )
 
     else:
@@ -218,7 +218,7 @@ async def receive_pdf(
 Para começar, com qual frequência você prefere receber nossas mensagens? As opções são:
 - Semanal
 - Mensal
-Escolha a que for mais conveniente para você! 🗓️✨""",
+Escolha a que for mais conveniente para você! 🗓✨""",
             to='whatsapp:+' + user_num
         )
 
