@@ -41,7 +41,6 @@ async def receive_pdf(
     transactions_db = db("transactions")
     reports_db = db("reports")
 
-    # Fetch or initialize user state
     result = user_db.find_one_and_update(
         {"user_num": user_num},
         {"$setOnInsert": {"user_num": user_num, "data": {"freq": None, "estado": None}}},
@@ -53,7 +52,6 @@ async def receive_pdf(
     freq = result["data"].get("freq", None)
     Body_lower = Body.lower() if Body else ""
 
-    # Map old state names to new state names for backward compatibility
     old_to_new_state_map = {
         None: "aguardando_frequencia",
         "frequencia": "aguardando_extrato",
@@ -67,7 +65,6 @@ async def receive_pdf(
         )
         state = new_state
 
-    # Handle user input based on the current state
     if state == "aguardando_frequencia":
         if Body_lower in ["semanal", "mensal"]:
             user_db.update_one(
@@ -98,11 +95,9 @@ async def receive_pdf(
                 to='whatsapp:+' + user_num
             )
             try:
-                # Process the PDF and extract transactions
                 data = await process_pdf(MediaUrl0)
                 extract = data.additional_kwargs['tool_calls']
 
-                # Filter transactions by frequency
                 interval_days = 7 if freq == "semanal" else 30
                 data_hoje = datetime.today().date()
                 filtered_transactions = []
@@ -121,24 +116,20 @@ async def receive_pdf(
                             "valor": transaction_data["valor"],
                         })
 
-                # Save transactions to the database
                 if filtered_transactions:
                     transactions_db.insert_many(filtered_transactions)
 
-                # Generate a financial report
                 transacao_formatada = "\n".join(
                     f"Transação: {t}" for t in filtered_transactions
                 )
                 relatorio = chain_gera_relatorio.invoke({'transacoes': transacao_formatada})
 
-                # Save report to the database
                 reports_db.insert_one({
                     "user_id": user_num,
                     "report": relatorio,
                     "generated_at": datetime.now().isoformat()
                 })
 
-                # Split the report into smaller messages and send via WhatsApp
                 limite_caracteres = 1500
                 secoes = relatorio.split('\n\n')
                 mensagens = []

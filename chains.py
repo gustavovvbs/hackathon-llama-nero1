@@ -115,6 +115,7 @@ Não faça o relatório em formato de markdown.
 
 NÃO INCLUA GRÁFICOS OU INTENÇÃO DE INCLUIR UM GRÁFICO.
 
+NÃO FALE NADA SOBRE ENTREGAR ALGO PARA O USUÁRIO, JÁ QUE O USUÁRIO QUE IRÁ RECEBER O RELATÓRIO.
 Não faça nenhum tipo de presunção sobre o que foram os gastos, apenas forneca os dados de forma clara e objetiva, se baseando somente nos dados fornecidos. Por exemplo, não diga que o usuário gastou muito com educação por conta de cursos de especialização, já que é impossível saber.
 
 Divida as seções do relatório com os seguintes caracteres:
