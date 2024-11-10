@@ -3,7 +3,6 @@ langchain-groq
 langchain-openai
 python-dotenv
 openai
-pypdf
 pydantic==1.10.13
 tiktoken
 bs4
