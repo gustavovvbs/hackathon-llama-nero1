@@ -1,150 +1,225 @@
-from langchain_groq import ChatGroq
-from dotenv import load_dotenv
 import os
-
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from operator import itemgetter
+from pymongo import MongoClient
+from dotenv import load_dotenv
+from fastapi import Form, FastAPI
+from typing import Any, Optional
+from datetime import datetime
+from utils import process_pdf
+from chains import chain_gera_relatorio
+from twilio.rest import Client 
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+TWILIO_SID = os.getenv("TWILIO_SID")
+TWILIO_AUTH = os.getenv("TWILIO_TOKEN")
 
-template_agregador = """
-Você é um especialista em análise financeira acessível. Com base nas transações fornecidas, sua tarefa é:
+MONGODB_ATLAS_CLUSTER_URI = os.getenv('MONGODB_URI')
+twilio_client = Client(TWILIO_SID, TWILIO_AUTH)
 
-1. **Calcular o total gasto em cada categoria**, utilizando emojis para representar cada uma delas e explicando de forma clara e visual.
-   - 🥗 **Alimentação**: R$ valor
-   - 🚗 **Transporte**: R$ valor
-   - 🏠 **Moradia**: R$ valor
-   - 🎉 **Lazer**: R$ valor
-   - ... *(adicione outras categorias conforme necessário)*
+app = FastAPI(
+    title="Llama Hackathon",
+    version="1.0",
+    description="Uma API que ",
+)
 
-2. **Destacar as maiores despesas individuais** e em quais categorias elas se concentram, utilizando gráficos simples ou representações visuais.
-3. **Apresentar médias de gastos diárias, semanais e mensais** de maneira simples e direta.
-4. **Identificar períodos de maior gasto** e ajudar o usuário a entender esses picos com exemplos concretos.
-5. **Destacar hábitos financeiros positivos** que o usuário pode manter para melhorar sua saúde financeira.
-
-Mantenha o tom leve e educativo, ajudando o usuário a se sentir no controle de suas finanças.
-
-**Dados das transações:**
-{transacoes}
-"""
-
-template_padroes = """
-Como especialista em análise financeira, ajude o usuário a identificar seus hábitos financeiros ao:
-
-1. **Descobrir padrões de gastos recorrentes**, utilizando emojis para cada categoria e explicações claras.
-2. **Entender ciclos de despesas**, como aumentos no início ou fim do mês, destacando com gráficos ou ícones.
-3. **Apontar categorias com tendências de aumento nos gastos** e que precisam de atenção, utilizando cores ou sinais de alerta.
-4. **Mostrar como diferentes categorias de despesas estão conectadas**, usando diagramas simples ou fluxogramas.
-
-Apresente as informações de forma clara e educativa para que o usuário veja valor em sua análise.
-
-**Dados agregados:**
-{dados_agregados}
-
-"""
-
-template_tendencias = """
-Você é um especialista em projeções financeiras. Ajude o usuário a planejar melhor seus gastos ao:
-
-1. **Estimar gastos futuros em categorias importantes**, representadas por emojis para facilitar a visualização.
-2. **Identificar tendências de aumento ou redução em despesas** e explicar de forma acessível com gráficos de linha ou barras.
-3. **Comparar os hábitos do usuário com padrões saudáveis** e dar contexto utilizando benchmarks ou médias de mercado.
-4. **Avaliar se os gastos são sustentáveis** ou precisam de ajustes, destacando com ícones de semáforo (verde, amarelo, vermelho).
-
-Use um tom claro e motivador, ajudando o usuário a visualizar um caminho financeiro positivo.
-
-**Dados de padrões:**
-{padroes}
-
-"""
+def db(collection: str):
+    client = MongoClient(MONGODB_ATLAS_CLUSTER_URI)
+    DB_NAME = "metahack"
+    COLLECTION_NAME = collection
+    return client[DB_NAME][COLLECTION_NAME]
 
 
-template_insights = """
-Como consultor financeiro, gere insights claros e acionáveis com base nos dados do usuário:
+@app.post('/')
+async def receive_pdf(
+    Body: Any = Form(...),
+    From: str = Form(...),
+    MediaUrl0: Optional[str] = Form(None),
+    MediaContentType0: Optional[str] = Form(None)
+):
+    user_num = From[10:]
+    user_db = db("userdb")
+    transactions_db = db("transactions")
+    reports_db = db("reports")
 
-1. **Áreas onde é possível economizar de forma prática**, destacadas com emojis e sugestões específicas.
-2. **Comportamentos financeiros positivos** que o usuário deve manter, utilizando ícones de medalha ou estrelas.
-3. **Hábitos que precisam de ajustes** com explicações claras e exemplos de como melhorar.
-4. **Comparação com metas financeiras** para motivar o usuário a melhorar, mostrando progresso com barras de progresso ou gráficos.
-
-Apresente os insights de forma acessível e motivadora, sugerindo passos concretos para o usuário.
-
-**Tendências:**
-{dados_completos}
-"""
-
-template_recomendacoes = """
-Como consultor financeiro pessoal, ofereça recomendações práticas e amigáveis com base nos insights:
-
-1. **Sugestões específicas para economizar em categorias importantes**, usando emojis para ilustrar cada recomendação.
-2. **Alternativas viáveis para serviços caros ou despesas desnecessárias**, apresentadas de forma clara e direta.
-3. **Estratégias simples para melhorar os hábitos financeiros**, com passos fáceis de seguir.
-4. **Metas alcançáveis para o próximo período** com exemplos motivadores e sugestões de acompanhamento.
-
-Use um tom amigável, explique de forma direta e **adicione emojis** para tornar a comunicação mais leve e engajante. 🎯💡👍
-
-**Insights disponíveis:**
-{insights}
-"""
-
-template_relatorio = """
-Você é um especialista em criar relatórios financeiros claros e objetivos. Crie um relatório para o usuário que inclua:
-
-1. **Resumo dos Gastos:**
-   - **Números principais e conclusões** apresentadas de forma simples.
-   - **Gastos por categoria organizados visualmente** com emojis e gráficos.
-     - 🥗 **Alimentação**: R$ valor
-     - 🚗 **Transporte**: R$ valor
-     - 🏠 **Moradia**: R$ valor
-     - 🎉 **Lazer**: R$ valor
-     - ... *(adicione outras categorias conforme necessário)*
-   - **Destaques de tendências de gastos** com gráficos de linha ou barras.
-
-2. **Análise Detalhada:**
-   - **Explicação de gastos por categorias** com exemplos claros e emojis.
-   - **Tendências financeiras identificadas** utilizando gráficos e ícones.
-
-3. **Recomendações:**
-   - **Sugestões práticas para economizar**, ilustradas com emojis e passos concretos. Não de sugestões genéricas e vagas, mas sim recomendações específicas e acionáveis com base nos dados fornecidos.
-
-Não faça o relatório em formato de markdown.
-
-Divida as seções do relatório com os seguintes caracteres:
-
----------------
-"""
-
-prompt_agregador = PromptTemplate.from_template(template_agregador)
-prompt_padroes = PromptTemplate.from_template(template_padroes)
-prompt_tendencias = PromptTemplate.from_template(template_tendencias)
-prompt_insights = PromptTemplate.from_template(template_insights)
-prompt_recomendacoes = PromptTemplate.from_template(template_recomendacoes)
-prompt_relatorio = PromptTemplate.from_template(template_relatorio)
-
-llm = ChatGroq(
-        api_key=GROQ_API_KEY,
-        model="llama3-70b-8192"
+    # Fetch or initialize user state
+    result = user_db.find_one_and_update(
+        {"user_num": user_num},
+        {"$setOnInsert": {"user_num": user_num, "data": {"freq": None, "estado": None}}},
+        upsert=True,
+        return_document=True
     )
 
-chain_agregador = prompt_agregador | llm | StrOutputParser()
-chain_padroes = prompt_padroes | llm | StrOutputParser()
-chain_tendencias = prompt_tendencias | llm | StrOutputParser()
-chain_insights = prompt_insights | llm | StrOutputParser()
-chain_recomendacoes = prompt_recomendacoes | llm | StrOutputParser()
-chain_relatorio = prompt_relatorio | llm | StrOutputParser()
+    state = result["data"]["estado"]
+    freq = result["data"].get("freq", None)
+    Body_lower = Body.lower() if Body else ""
 
-chain_analise_basica = {"dados_agregados": chain_agregador} | chain_padroes
+    # Map old state names to new state names for backward compatibility
+    old_to_new_state_map = {
+        None: "aguardando_frequencia",
+        "frequencia": "aguardando_extrato",
+        "extrato": "aguardando_extrato",
+    }
+    if state in old_to_new_state_map:
+        new_state = old_to_new_state_map[state]
+        user_db.update_one(
+            {"user_num": user_num},
+            {"$set": {"data.estado": new_state}}
+        )
+        state = new_state
 
-chain_gera_relatorio = (
-    {"padroes": chain_analise_basica} 
-    | RunnablePassthrough() 
-    | {"dados_completos": chain_tendencias, "padroes": itemgetter("padroes")} 
-    | RunnablePassthrough() 
-    | {"insights": chain_insights, "dados_completos": itemgetter("dados_completos")}
-    | {"recomendacoes": chain_recomendacoes, "insights": itemgetter("insights"), "dados_completos": itemgetter("dados_completos")}
-    | chain_relatorio
-)
+    # Handle user input based on the current state
+    if state == "aguardando_frequencia":
+        if Body_lower in ["semanal", "mensal"]:
+            user_db.update_one(
+                {"user_num": user_num},
+                {"$set": {"data.freq": Body_lower, "data.estado": "aguardando_extrato"}}
+            )
+            message = twilio_client.messages.create(
+                from_='whatsapp:+15674852810',
+                body="Por favor, envie o extrato bancário mais recente em formato PDF.",
+                to='whatsapp:+' + user_num
+            )
+        else:
+            message = twilio_client.messages.create(
+                from_='whatsapp:+15674852810',
+                body="Oi! 👋 Envia um extrato para que eu possa gerar um relatório financeiro completo para você. Ou, se preferir, envie 'Semanal' ou 'Mensal' para ajustar a frequência dos nossos lembretes personalizados.",
+                to='whatsapp:+' + user_num
+            )
+
+    elif state == "aguardando_extrato":
+        if MediaUrl0:
+            user_db.update_one(
+                {"user_num": user_num},
+                {"$set": {"data.estado": "processando_extrato"}}
+            )
+            message = twilio_client.messages.create(
+                from_='whatsapp:+15674852810',
+                body="Estamos processando seu extrato! 😊 Pode levar de um a dois minutos para analisarmos tudo e gerar um relatório detalhado.",
+                to='whatsapp:+' + user_num
+            )
+            try:
+                # Process the PDF and extract transactions
+                data = await process_pdf(MediaUrl0)
+                extract = data.additional_kwargs['tool_calls']
+
+                # Filter transactions by frequency
+                interval_days = 7 if freq == "semanal" else 30
+                data_hoje = datetime.today().date()
+                filtered_transactions = []
+
+                for transaction in extract:
+                    transaction_data = eval(transaction['function']['arguments'])
+                    transaction_date = datetime.strptime(transaction_data['data'], "%Y-%m-%d").date()
+                    delta = (data_hoje - transaction_date).days
+
+                    if delta <= interval_days:
+                        filtered_transactions.append({
+                            "user_id": user_num,
+                            "tipo": transaction_data["tipo"],
+                            "data": transaction_date.isoformat(),
+                            "entrada_ou_saida": transaction_data["entrada_ou_saida"],
+                            "valor": transaction_data["valor"],
+                        })
+
+                # Save transactions to the database
+                if filtered_transactions:
+                    transactions_db.insert_many(filtered_transactions)
+
+                # Generate a financial report
+                transacao_formatada = "\n".join(
+                    f"Transação: {t}" for t in filtered_transactions
+                )
+                relatorio = chain_gera_relatorio.invoke({'transacoes': transacao_formatada})
+
+                # Save report to the database
+                reports_db.insert_one({
+                    "user_id": user_num,
+                    "report": relatorio,
+                    "generated_at": datetime.now().isoformat()
+                })
+
+                # Split the report into smaller messages and send via WhatsApp
+                limite_caracteres = 1500
+                secoes = relatorio.split('\n\n')
+                mensagens = []
+                mensagem_atual = ''
+
+                for secao in secoes:
+                    if len(mensagem_atual) + len(secao) + 2 <= limite_caracteres:
+                        if mensagem_atual:
+                            mensagem_atual += '\n\n' + secao
+                        else:
+                            mensagem_atual = secao
+                    else:
+                        mensagens.append(mensagem_atual)
+                        mensagem_atual = secao
+
+                if mensagem_atual:
+                    mensagens.append(mensagem_atual)
+
+                for texto_mensagem in mensagens:
+                    message = twilio_client.messages.create(
+                        from_='whatsapp:+15674852810',
+                        body=texto_mensagem,
+                        to='whatsapp:+' + user_num
+                    )
+
+                # Update user's state
+                user_db.update_one(
+                    {"user_num": user_num},
+                    {"$set": {"data.estado": "relatorio_enviado"}}
+                )
+
+            except Exception as err:
+                print(err)
+                message = twilio_client.messages.create(
+                    from_='whatsapp:+15674852810',
+                    body="Tivemos um problema ao processar seu extrato. Pode enviar novamente, por favor? 😊",
+                    to='whatsapp:+' + user_num
+                )
+                user_db.update_one(
+                    {"user_num": user_num},
+                    {"$set": {"data.estado": "aguardando_extrato"}}
+                )
+        else:
+            message = twilio_client.messages.create(
+                from_='whatsapp:+15674852810',
+                body="Por favor, envie o extrato bancário em formato PDF para que possamos começar! 😊",
+                to='whatsapp:+' + user_num
+            )
+
+    elif state == "processando_extrato":
+        message = twilio_client.messages.create(
+            from_='whatsapp:+15674852810',
+            body="Estamos trabalhando no seu extrato. Só mais um pouco de paciência! 😊",
+            to='whatsapp:+' + user_num
+        )
+
+    elif state == "relatorio_enviado":
+        message = twilio_client.messages.create(
+            from_='whatsapp:+15674852810',
+            body="Seu relatório financeiro está pronto! Se precisar de outro relatório no futuro, basta enviar um novo extrato. Estamos aqui para ajudar! 😊",
+            to='whatsapp:+' + user_num
+        )
+        user_db.update_one(
+            {"user_num": user_num},
+            {"$set": {"data.estado": "aguardando_frequencia", "data.freq": None}}
+        )
+
+    else:
+        user_db.update_one(
+            {"user_num": user_num},
+            {"$set": {"data.estado": "aguardando_frequencia", "data.freq": None}}
+        )
+        message = twilio_client.messages.create(
+            from_='whatsapp:+15674852810',
+            body="""Olá! 👋 Eu sou o Finn.AI, o bot que ajuda você a cuidar das suas finanças! 😊
+
+Para começar, com qual frequência você prefere receber nossas mensagens? As opções são:
+- Semanal
+- Mensal
+Escolha a que for mais conveniente para você! 🗓✨""",
+            to='whatsapp:+' + user_num
+        )
+
+    return ''
