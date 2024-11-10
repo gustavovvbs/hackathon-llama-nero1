@@ -49,7 +49,7 @@ async def receive_pdf(
     state = result["data"]["estado"]
     Body_lower = Body.lower() if Body else ""
 
-    
+
 
     # **Map old state names to new state names for backward compatibility**
     old_to_new_state_map = {
@@ -80,7 +80,7 @@ async def receive_pdf(
         else:
             message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
-                body="Desculpe, não entendi. Por favor, responda com 'semanal' ou 'mensal'.",
+                body="Oi! 👋 Envia um extrato pra eu fazer um relatório, ou envie 'Semanal' ou 'Mensal' para escolher a frequência dos lembretes.",
                 to='whatsapp:+' + user_num
             )
 
@@ -92,7 +92,7 @@ async def receive_pdf(
             )
             message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
-                body="Espere um pouco! Estamos processando seu extrato 😊.",
+                body="Espere um pouco! Estamos processando seu extrato 😊. Pode demorar de um a dois minutos.",
                 to='whatsapp:+' + user_num
             )
             try:
