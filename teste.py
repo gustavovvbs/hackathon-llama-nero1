@@ -85,7 +85,12 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
     if state == None:
         message = twilio_client.messages.create(
         from_='whatsapp:+15674852810',
-        body="Mensagem inicial dando boas-vindas e pedindo a frequência de envio",
+        body="""Olá! 👋 Eu sou o Finn.AI, o bot que ajuda você a cuidar das suas finanças! 😊
+
+            Para começar, com qual frequência você prefere receber nossas mensagens? As opções são:
+            - Semanal
+            - Mensal
+            Escolha a que for mais conveniente para você! 📅✨""",
         to='whatsapp:+' + user_num
         )
 
@@ -94,7 +99,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
     elif state == "frequencia":
         message = twilio_client.messages.create(
         from_='whatsapp:+15674852810',
-        body="Agora que sabemos a frequencia, pedimos o extrato mais recente para o usuário.",
+        body=""""Para ajudar você de forma mais precisa, preciso que envie o extrato bancário mais recente, no formato PDF. 📄📅 Isso nos permitirá entender melhor sua situação atual e oferecer recomendações personalizadas.""",
         to='whatsapp:+' + user_num
         )
 
@@ -155,7 +160,9 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
             else:
                 message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
-                body="guardando seus dados no banco de dados para melhorar analises futuras.",
+                body="""Armazenando seus dados de forma segura em nosso banco de dados, podemos melhorar as análises e fornecer recomendações mais precisas no futuro. 📊
+
+                    Por favor, envie o extrato bancário mais recente para que possamos começar!""",
                 to='whatsapp:+' + user_num
                 )
         
@@ -169,34 +176,5 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
 
             return ''
         
-        
-
-
-
-
-
-
-
-                
-                
-                
-        
-
-        if datetime.now:
-            message = twilio_client.messages.create(
-            from_='whatsapp:+15674852810',
-            body="envia o relatório e adiciona as infos no db",
-            to='whatsapp:+' + user_num
-            )
-
-            return ''
-        else:
-            message = twilio_client.messages.create(
-            from_='whatsapp:+15674852810',
-            body="adiciona as infos no db e pede pro usuário enviar os dados mais atualizados",
-            to='whatsapp:+' + user_num
-            )
-
-            return ''
 
     
