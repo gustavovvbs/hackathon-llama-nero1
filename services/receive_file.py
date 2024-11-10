@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv 
 from typing import Any
 import httpx 
+import utils 
 
 
 load_dotenv()
@@ -24,8 +25,8 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: s
     print(MediaUrl0)
     if MediaContentType0 == "application/pdf":
         async with httpx.AsyncClient() as client:
-            response = await client.get(MediaUrl0)
-            pdf_bytes = response.content
+            response = await utils.process_pdf(MediaUrl0)
+            print(response)
         return JSONResponse(content={"message": "PDF recebido com sucesso."})
     else:
         return JSONResponse(content={"message": "O arquivo recebido não é um PDF."}, status_code=400)
