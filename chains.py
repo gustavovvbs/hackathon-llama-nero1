@@ -14,44 +14,50 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 template_agregador = """
 Você é um especialista em análise financeira acessível. Com base nas transações fornecidas, sua tarefa é:
 
-1. Calcular o total gasto em cada categoria, explicando de forma clara e visual.
-2. Destacar as maiores despesas individuais e em quais categorias elas se concentram.
-3. Apresentar médias de gastos diárias, semanais e mensais de maneira simples.
-4. Identificar períodos de maior gasto e ajudar o usuário a entender esses picos.
-5. Destacar hábitos financeiros positivos que o usuário pode manter.
+1. **Calcular o total gasto em cada categoria**, utilizando emojis para representar cada uma delas e explicando de forma clara e visual.
+   - 🥗 **Alimentação**: R$ valor
+   - 🚗 **Transporte**: R$ valor
+   - 🏠 **Moradia**: R$ valor
+   - 🎉 **Lazer**: R$ valor
+   - ... *(adicione outras categorias conforme necessário)*
+
+2. **Destacar as maiores despesas individuais** e em quais categorias elas se concentram, utilizando gráficos simples ou representações visuais.
+3. **Apresentar médias de gastos diárias, semanais e mensais** de maneira simples e direta.
+4. **Identificar períodos de maior gasto** e ajudar o usuário a entender esses picos com exemplos concretos.
+5. **Destacar hábitos financeiros positivos** que o usuário pode manter para melhorar sua saúde financeira.
 
 Mantenha o tom leve e educativo, ajudando o usuário a se sentir no controle de suas finanças.
 
-Dados das transações:
+**Dados das transações:**
 {transacoes}
 """
 
 template_padroes = """
 Como especialista em análise financeira, ajude o usuário a identificar seus hábitos financeiros ao:
 
-1. Descobrir padrões de gastos recorrentes com explicações claras.
-2. Entender ciclos de despesas, como aumento no início ou fim do mês.
-3. Apontar categorias com tendências de aumento nos gastos e que precisam de atenção.
-4. Mostrar como diferentes categorias de despesas estão conectadas.
+1. **Descobrir padrões de gastos recorrentes**, utilizando emojis para cada categoria e explicações claras.
+2. **Entender ciclos de despesas**, como aumentos no início ou fim do mês, destacando com gráficos ou ícones.
+3. **Apontar categorias com tendências de aumento nos gastos** e que precisam de atenção, utilizando cores ou sinais de alerta.
+4. **Mostrar como diferentes categorias de despesas estão conectadas**, usando diagramas simples ou fluxogramas.
 
 Apresente as informações de forma clara e educativa para que o usuário veja valor em sua análise.
 
-Dados agregados:
+**Dados agregados:**
 {dados_agregados}
 
 """
 
 template_tendencias = """
-CVocê é um especialista em projeções financeiras. Ajude o usuário a planejar melhor seus gastos ao:
+Você é um especialista em projeções financeiras. Ajude o usuário a planejar melhor seus gastos ao:
 
-1. Estimar gastos futuros em categorias importantes.
-2. Identificar tendências de aumento ou redução em despesas e explicar de forma acessível.
-3. Comparar os hábitos do usuário com padrões saudáveis e dar contexto.
-4. Avaliar se os gastos são sustentáveis ou precisam de ajustes.
+1. **Estimar gastos futuros em categorias importantes**, representadas por emojis para facilitar a visualização.
+2. **Identificar tendências de aumento ou redução em despesas** e explicar de forma acessível com gráficos de linha ou barras.
+3. **Comparar os hábitos do usuário com padrões saudáveis** e dar contexto utilizando benchmarks ou médias de mercado.
+4. **Avaliar se os gastos são sustentáveis** ou precisam de ajustes, destacando com ícones de semáforo (verde, amarelo, vermelho).
 
 Use um tom claro e motivador, ajudando o usuário a visualizar um caminho financeiro positivo.
 
-Dados de padrões:
+**Dados de padrões:**
 {padroes}
 
 """
@@ -59,65 +65,74 @@ Dados de padrões:
 template_anomalias = """
 Como analista financeiro, ajude o usuário a identificar possíveis problemas em seus gastos ao:
 
-1. Localizar despesas fora do padrão habitual e explicar o porquê.
-2. Verificar cobranças duplicadas ou irregulares.
-3. Identificar serviços recorrentes que parecem não estar sendo usados.
-4. Apontar categorias com gastos desproporcionais e sugerir ajustes.
+1. **Localizar despesas fora do padrão habitual**, utilizando emojis para destacar as categorias afetadas e explicando o porquê.
+2. **Verificar cobranças duplicadas ou irregulares**, listando-as com detalhes claros.
+3. **Identificar serviços recorrentes que parecem não estar sendo usados**, sugerindo cancelamentos se necessário.
+4. **Apontar categorias com gastos desproporcionais** e sugerir ajustes, usando gráficos de pizza ou barras para visualização.
 
-Se não encontrar anomalias, destaque o bom comportamento financeiro do usuário. Use exemplos simples e amigáveis.
+Se não encontrar anomalias, **destaque o bom comportamento financeiro do usuário** com mensagens positivas e exemplos simples e amigáveis.
 
-Dados:
+**Dados:**
 {dados_completos}
-Padrões:
+
+**Padrões:**
 {padroes}
 """
 
 template_insights = """
 Como consultor financeiro, gere insights claros e acionáveis com base nos dados do usuário:
 
-1. Áreas onde é possível economizar de forma prática.
-2. Comportamentos financeiros positivos que o usuário deve manter.
-3. Hábitos que precisam de ajustes com explicações claras.
-4. Comparação com metas financeiras para motivar o usuário a melhorar.
+1. **Áreas onde é possível economizar de forma prática**, destacadas com emojis e sugestões específicas.
+2. **Comportamentos financeiros positivos** que o usuário deve manter, utilizando ícones de medalha ou estrelas.
+3. **Hábitos que precisam de ajustes** com explicações claras e exemplos de como melhorar.
+4. **Comparação com metas financeiras** para motivar o usuário a melhorar, mostrando progresso com barras de progresso ou gráficos.
 
 Apresente os insights de forma acessível e motivadora, sugerindo passos concretos para o usuário.
 
-Tendências:
+**Tendências:**
 {dados_completos}
-Anomalias:
+
+**Anomalias:**
 {anomalias}
 """
 
 template_recomendacoes = """
 Como consultor financeiro pessoal, ofereça recomendações práticas e amigáveis com base nos insights:
 
-1. Sugestões específicas para economizar em categorias importantes.
-2. Alternativas viáveis para serviços caros ou despesas desnecessárias.
-3. Estratégias simples para melhorar os hábitos financeiros.
-4. Metas alcançáveis para o próximo período com exemplos motivadores.
+1. **Sugestões específicas para economizar em categorias importantes**, usando emojis para ilustrar cada recomendação.
+2. **Alternativas viáveis para serviços caros ou despesas desnecessárias**, apresentadas de forma clara e direta.
+3. **Estratégias simples para melhorar os hábitos financeiros**, com passos fáceis de seguir.
+4. **Metas alcançáveis para o próximo período** com exemplos motivadores e sugestões de acompanhamento.
 
-Use um tom amigável, explique de forma direta e adicione emojis para tornar a comunicação mais leve e engajante.
+Use um tom amigável, explique de forma direta e **adicione emojis** para tornar a comunicação mais leve e engajante. 🎯💡👍
 
-Insights disponíveis:
+**Insights disponíveis:**
 {insights}
 """
 
 template_relatorio = """
 Você é um especialista em criar relatórios financeiros claros e objetivos. Crie um relatório para o usuário que inclua:
 
-1. Resumo dos Gastos:
-   - Números principais e conclusões apresentadas de forma simples.
-   - Gastos por categoria organizados visualmente.
-   - Destaques de tendências de gastos.
+1. **Resumo dos Gastos:**
+   - **Números principais e conclusões** apresentadas de forma simples.
+   - **Gastos por categoria organizados visualmente** com emojis e gráficos.
+     - 🥗 **Alimentação**: R$ valor
+     - 🚗 **Transporte**: R$ valor
+     - 🏠 **Moradia**: R$ valor
+     - 🎉 **Lazer**: R$ valor
+     - ... *(adicione outras categorias conforme necessário)*
+   - **Destaques de tendências de gastos** com gráficos de linha ou barras.
 
-2. Análise Detalhada:
-   - Explicação de gastos por categorias com exemplos claros.
-   - Tendências financeiras identificadas.
-   - Anomalias importantes e como ajustá-las.
+2. **Análise Detalhada:**
+   - **Explicação de gastos por categorias** com exemplos claros e emojis.
+   - **Tendências financeiras identificadas** utilizando gráficos e ícones.
+   - **Anomalias importantes** e como ajustá-las, destacadas com sinais de alerta.
 
-3. Recomendações:
-   - Sugestões práticas para economizar.
-   - Próximos passos que o usuário pode seguir facilmente.
+3. **Recomendações:**
+   - **Sugestões práticas para economizar**, ilustradas com emojis e passos concretos.
+   - **Próximos passos que o usuário pode seguir facilmente**, com exemplos motivadores.
+
+Não faça o relatório em formato de markdown.
 
 Divida as seções do relatório com os seguintes caracteres:
 

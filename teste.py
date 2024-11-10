@@ -80,7 +80,7 @@ async def receive_pdf(
         else:
             message = twilio_client.messages.create(
                 from_='whatsapp:+15674852810',
-                body="Oi! 👋 Envia um extrato pra eu fazer um relatório, ou envie 'Semanal' ou 'Mensal' para escolher a frequência dos lembretes.",
+                body="Oi! 👋 Envia um extrato pra eu fazer um relatório, ou envie 'Semanal' ou 'Mensal' para mudar a frequência dos lembretes.",
                 to='whatsapp:+' + user_num
             )
 
