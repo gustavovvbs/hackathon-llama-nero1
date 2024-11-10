@@ -17,9 +17,11 @@ twilio_client = Client(TWILIO_SID, TWILIO_AUTH)
 
 router = APIRouter()
 
+
 @router.post('/')
 async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: str = Form(...),  MediaContentType0: str = Form(...)):
-
+    
+    print(MediaUrl0)
     if MediaContentType0 == "application/pdf":
         async with httpx.AsyncClient() as client:
             response = await client.get(MediaUrl0)
