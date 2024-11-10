@@ -122,7 +122,6 @@ Divida as seções do relatório com os seguintes caracteres:
 prompt_agregador = PromptTemplate.from_template(template_agregador)
 prompt_padroes = PromptTemplate.from_template(template_padroes)
 prompt_tendencias = PromptTemplate.from_template(template_tendencias)
-prompt_anomalias = PromptTemplate.from_template(template_anomalias)
 prompt_insights = PromptTemplate.from_template(template_insights)
 prompt_recomendacoes = PromptTemplate.from_template(template_recomendacoes)
 prompt_relatorio = PromptTemplate.from_template(template_relatorio)
