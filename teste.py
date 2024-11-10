@@ -159,7 +159,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
                 # Enviar cada mensagem via WhatsApp com numeração
                 total_mensagens = len(mensagens)
                 for idx, texto_mensagem in enumerate(mensagens, 1):
-                    texto_numerado = f"Mensagem {idx}/{total_mensagens}\n\n{texto_mensagem}"
+                    texto_numerado = f"{total_mensagens}\n\n{texto_mensagem}"
                     message = twilio_client.messages.create(
                         from_='whatsapp:+15674852810',
                         body=texto_numerado,
