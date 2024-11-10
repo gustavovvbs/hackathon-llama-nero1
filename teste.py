@@ -2,7 +2,7 @@ import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from fastapi import Form, FastAPI
-from typing import Any
+from typing import Any, Optional
 from datetime import datetime
 from utils import process_pdf
 from chains import chain_gera_relatorio
