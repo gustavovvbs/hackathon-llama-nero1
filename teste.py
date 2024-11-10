@@ -111,7 +111,7 @@ async def receive_pdf(Body: Any = Form(...), From: str = Form(...), MediaUrl0: O
         try:
             data = await process_pdf(MediaUrl0)
             extract = data.additional_kwargs['tool_calls']
-            data_antiga = extract[0]['function']['arguments']['data']
+            data_antiga = eval(extract[0]['function']['arguments'])['data']
             
             # Converte a string para um objeto datetime
             data_obj = datetime.strptime(data_antiga, "%Y-%m-%d").date()
