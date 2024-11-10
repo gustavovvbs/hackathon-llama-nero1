@@ -203,7 +203,7 @@ async def receive_pdf(
         )
         user_db.update_one(
             {"user_num": user_num},
-            {"$set": {"data.estado": "aguardando_frequencia", "data.freq": None}}
+            {"$set": {"data.estado": "aguardando_extrato", "data.freq": None}}
         )
 
     else:
